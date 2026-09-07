@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import AddProduce from "./pages/AddProduce";
 import AIInsights from "./pages/AIInsights";
@@ -13,18 +14,25 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* Landing */}
+        {/* Public */}
         <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/marketplace" element={<Marketplace />} />
 
         {/* Farmer */}
         <Route path="/farmer" element={<FarmerDashboard />} />
-        <Route path="/farmer/add-produce" element={<AddProduce />} />
-        <Route path="/farmer/ai-insights" element={<AIInsights />} />
-        <Route path="/farmer/orders" element={<Orders />} />
-
-        {/* Marketplace */}
-        <Route path="/marketplace" element={<Marketplace />} />
+        <Route
+          path="/farmer/add-produce"
+          element={<AddProduce />}
+        />
+        <Route
+          path="/farmer/ai-insights"
+          element={<AIInsights />}
+        />
+        <Route
+          path="/farmer/orders"
+          element={<Orders />}
+        />
 
         {/* Logistics */}
         <Route path="/logistics" element={<Logistics />} />
@@ -32,12 +40,11 @@ function App() {
         {/* Admin */}
         <Route path="/admin" element={<Admin />} />
 
-        {/* Unknown URL */}
+        {/* Unknown route */}
         <Route
           path="*"
           element={<Navigate to="/" replace />}
         />
-
       </Routes>
     </BrowserRouter>
   );
