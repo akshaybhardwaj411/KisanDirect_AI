@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
+import Navbar from "../components/Navbar";
+import Button from "../components/Button";
+
 export default function AddProduce() {
   const navigate = useNavigate();
 
@@ -16,10 +19,10 @@ export default function AddProduce() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((previous) => ({
+      ...previous,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -34,34 +37,10 @@ export default function AddProduce() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Navbar />
 
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-
-          <div>
-            <h1 className="text-2xl font-bold text-green-800">
-              KisanDirect AI
-            </h1>
-            <p className="text-sm text-slate-500">
-              Add Produce
-            </p>
-          </div>
-
-          <Link
-            to="/farmer"
-            className="text-sm font-semibold text-green-700 hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
-
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="max-w-4xl mx-auto px-6 py-8">
-
-        {/* Page heading */}
+      <main className="page-container py-8">
+        {/* Page Heading */}
         <div className="mb-7">
           <p className="text-sm font-semibold text-green-700">
             FARMER MARKETPLACE
@@ -71,12 +50,13 @@ export default function AddProduce() {
             List Your Produce 🌾
           </h2>
 
-          <p className="text-slate-500 mt-2">
-            Add your produce details so buyers can discover and order directly.
+          <p className="text-slate-500 mt-2 max-w-2xl">
+            Add your produce details so buyers can discover and order
+            directly.
           </p>
         </div>
 
-        {/* Success message */}
+        {/* Success Message */}
         {submitted && (
           <div className="mb-6 bg-green-50 border border-green-200 text-green-800 rounded-xl px-5 py-4">
             <p className="font-semibold">
@@ -92,9 +72,8 @@ export default function AddProduce() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8"
+          className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 md:p-8 max-w-4xl"
         >
-
           {/* Section */}
           <div className="mb-7">
             <h3 className="text-lg font-bold text-slate-900">
@@ -108,7 +87,6 @@ export default function AddProduce() {
 
           {/* Crop + Quality */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Crop
@@ -119,7 +97,7 @@ export default function AddProduce() {
                 value={formData.crop}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                className="input-field bg-white"
               >
                 <option value="">Select crop</option>
                 <option value="Tomato">🍅 Tomato</option>
@@ -141,19 +119,17 @@ export default function AddProduce() {
                 name="quality"
                 value={formData.quality}
                 onChange={handleChange}
-                className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                className="input-field bg-white"
               >
-                <option>Grade A</option>
-                <option>Grade B</option>
-                <option>Grade C</option>
+                <option value="Grade A">Grade A</option>
+                <option value="Grade B">Grade B</option>
+                <option value="Grade C">Grade C</option>
               </select>
             </div>
-
           </div>
 
           {/* Quantity + Price */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5">
-
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">
                 Quantity (kg)
@@ -166,9 +142,10 @@ export default function AddProduce() {
                   value={formData.quantity}
                   onChange={handleChange}
                   min="1"
+                  step="1"
                   placeholder="e.g. 500"
                   required
-                  className="w-full px-4 py-3 pr-14 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-green-500"
+                  className="input-field pr-14"
                 />
 
                 <span className="absolute right-4 top-3.5 text-sm text-slate-400">
@@ -189,9 +166,10 @@ export default function AddProduce() {
                   value={formData.price}
                   onChange={handleChange}
                   min="1"
+                  step="0.01"
                   placeholder="e.g. 30"
                   required
-                  className="w-full px-4 py-3 pr-14 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-green-500"
+                  className="input-field pr-16"
                 />
 
                 <span className="absolute right-4 top-3.5 text-sm text-slate-400">
@@ -199,7 +177,6 @@ export default function AddProduce() {
                 </span>
               </div>
             </div>
-
           </div>
 
           {/* Location */}
@@ -215,15 +192,16 @@ export default function AddProduce() {
               onChange={handleChange}
               placeholder="e.g. Ghaziabad, Uttar Pradesh"
               required
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-green-500"
+              className="input-field"
             />
 
             <p className="text-xs text-slate-400 mt-2">
-              This helps us match your produce with nearby buyers and optimize logistics.
+              This helps us match your produce with nearby buyers and
+              optimize logistics.
             </p>
           </div>
 
-          {/* Harvest date */}
+          {/* Harvest Date */}
           <div className="mt-5">
             <label className="block text-sm font-semibold text-slate-700 mb-2">
               Expected Harvest / Ready Date
@@ -235,16 +213,14 @@ export default function AddProduce() {
               value={formData.harvestDate}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 outline-none focus:ring-2 focus:ring-green-500"
+              className="input-field"
             />
           </div>
 
-          {/* AI box */}
+          {/* AI Box */}
           <div className="mt-7 bg-green-50 border border-green-200 rounded-xl p-5">
-
             <div className="flex gap-3">
-
-              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-xl">
+              <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-xl shrink-0">
                 🤖
               </div>
 
@@ -259,42 +235,45 @@ export default function AddProduce() {
                   and demand insights.
                 </p>
               </div>
-
             </div>
-
           </div>
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 mt-8">
-
-            <button
+            <Button
               type="submit"
               disabled={submitted}
-              className="flex-1 bg-green-700 text-white py-3.5 rounded-xl font-semibold hover:bg-green-800 transition disabled:opacity-60"
+              className="flex-1"
             >
               {submitted ? "Listing Produce..." : "🌾 List Produce"}
-            </button>
+            </Button>
 
             <Link
               to="/farmer"
-              className="sm:w-40 border border-slate-300 text-slate-700 py-3.5 rounded-xl font-semibold text-center hover:bg-slate-50 transition"
+              className="sm:w-40 inline-flex items-center justify-center border border-slate-300 text-slate-700 py-3.5 rounded-xl font-semibold text-center hover:bg-slate-50 transition"
             >
               Cancel
             </Link>
-
           </div>
-
         </form>
 
-        {/* Trust note */}
-        <div className="text-center mt-6">
+        {/* Trust Note */}
+        <div className="max-w-4xl text-center mt-6">
           <p className="text-xs text-slate-400">
-            Your produce details are used only to facilitate marketplace matching and logistics.
+            Your produce details are used only to facilitate marketplace
+            matching and logistics.
           </p>
         </div>
 
+        {/* Prototype Notice */}
+        <div className="max-w-4xl mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-xs text-amber-800">
+            <strong>Prototype:</strong> Submitted produce is currently
+            handled in frontend demo state. Persistent marketplace
+            listings will be connected to the backend later.
+          </p>
+        </div>
       </main>
-
     </div>
   );
-            }
+}
