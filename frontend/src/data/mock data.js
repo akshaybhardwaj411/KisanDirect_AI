@@ -4,6 +4,37 @@ export const farmer = {
   location: "Ghaziabad, Uttar Pradesh",
   type: "Individual Farmer",
   phone: "+91 XXXXX XXXXX",
+
+  stats: {
+    produce: 3,
+    pendingOrders: 2,
+    earnings: "₹24,500",
+    activeListings: 3,
+  },
+
+  produce: [
+    {
+      crop: "Tomato",
+      quantity: 500,
+      price: 30,
+      status: "Active",
+      emoji: "🍅",
+    },
+    {
+      crop: "Potato",
+      quantity: 300,
+      price: 24,
+      status: "Active",
+      emoji: "🥔",
+    },
+    {
+      crop: "Wheat",
+      quantity: 800,
+      price: 28,
+      status: "Sold",
+      emoji: "🌾",
+    },
+  ],
 };
 
 export const products = [
@@ -127,10 +158,18 @@ export const aiInsights = {
   crop: "Tomato",
   location: "Ghaziabad, UP",
 
+  supply: 5000,
+  demand: 7200,
+
   availableSupply: 5000,
   predictedDemand: 7200,
 
   demandLevel: "HIGH",
+
+  priceRange: {
+    min: 28,
+    max: 32,
+  },
 
   suggestedPrice: {
     min: 28,
