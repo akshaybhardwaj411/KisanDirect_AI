@@ -1,67 +1,31 @@
 import { Link } from "react-router-dom";
 
-const stops = [
-  {
-    number: 1,
-    name: "Raj Kumar Farm",
-    location: "Ghaziabad, UP",
-    type: "Pickup",
-    quantity: "500 kg",
-  },
-  {
-    number: 2,
-    name: "Buyer — Sector 62",
-    location: "Noida, UP",
-    type: "Delivery",
-    quantity: "250 kg",
-  },
-  {
-    number: 3,
-    name: "Buyer — Sector 18",
-    location: "Noida, UP",
-    type: "Delivery",
-    quantity: "150 kg",
-  },
-  {
-    number: 4,
-    name: "Buyer — Delhi NCR",
-    location: "Delhi, NCR",
-    type: "Delivery",
-    quantity: "100 kg",
-  },
-];
+import Navbar from "../components/Navbar";
+import StatCard from "../components/StatCard";
+import { logistics } from "../data/mockData";
 
 export default function Logistics() {
+  const {
+    originalDistance,
+    optimizedDistance,
+    distanceSaved,
+    estimatedSaving,
+    totalProduce,
+    deliveryStops,
+    estimatedTime,
+    vehicle,
+    stops,
+  } = logistics;
+
+  const savingPercentage = Math.round(
+    (distanceSaved / originalDistance) * 100
+  );
+
   return (
     <div className="min-h-screen bg-slate-50">
+      <Navbar />
 
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-          <div>
-            <h1 className="text-2xl font-bold text-green-800">
-              KisanDirect AI
-            </h1>
-
-            <p className="text-sm text-slate-500">
-              Smart Logistics
-            </p>
-          </div>
-
-          <Link
-            to="/farmer"
-            className="text-sm font-semibold text-green-700 hover:underline"
-          >
-            ← Dashboard
-          </Link>
-
-        </div>
-      </header>
-
-      {/* Main */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-
+      <main className="page-container py-8">
         {/* Heading */}
         <div className="mb-7">
           <p className="text-sm font-semibold text-green-700">
@@ -78,11 +42,9 @@ export default function Logistics() {
         </div>
 
         {/* AI Summary */}
-        <div className="bg-green-700 text-white rounded-2xl p-6 mb-6">
-
+        <div className="bg-green-700 text-white rounded-2xl p-6 mb-6 shadow-sm">
           <div className="flex items-start gap-4">
-
-            <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center text-2xl shrink-0">
               🧠
             </div>
 
@@ -92,78 +54,58 @@ export default function Logistics() {
               </p>
 
               <h3 className="text-xl font-bold mt-1">
-                4 stops • 1 aggregated delivery
+                {stops.length} stops • 1 aggregated delivery
               </h3>
 
-              <p className="text-sm text-green-100 mt-2">
-                Nearby buyer orders have been grouped to reduce unnecessary
-                travel and improve vehicle utilization.
+              <p className="text-sm text-green-100 mt-2 max-w-3xl">
+                Nearby buyer orders have been grouped to reduce
+                unnecessary travel and improve vehicle utilization.
               </p>
             </div>
-
           </div>
-
         </div>
 
-        {/* Route stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+        {/* Route Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
+          <StatCard
+            title="Original Distance"
+            value={`${originalDistance} km`}
+            subtitle="Before optimization"
+            icon="🛣️"
+          />
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Original Distance
-            </p>
+          <StatCard
+            title="Optimized Distance"
+            value={`${optimizedDistance} km`}
+            subtitle="AI suggested route"
+            icon="📍"
+            trend="Optimized"
+            trendType="positive"
+          />
 
-            <h3 className="text-3xl font-bold text-slate-900 mt-2">
-              84 km
-            </h3>
-          </div>
+          <StatCard
+            title="Distance Saved"
+            value={`${distanceSaved} km`}
+            subtitle={`${savingPercentage}% shorter route`}
+            icon="📉"
+            trend={`-${savingPercentage}%`}
+            trendType="positive"
+          />
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Optimized Distance
-            </p>
-
-            <h3 className="text-3xl font-bold text-green-700 mt-2">
-              61 km
-            </h3>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Distance Saved
-            </p>
-
-            <h3 className="text-3xl font-bold text-green-700 mt-2">
-              23 km
-            </h3>
-
-            <span className="inline-block mt-2 text-xs font-bold text-green-700 bg-green-50 px-3 py-1 rounded-full">
-              ~27% shorter
-            </span>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Estimated Transport Saving
-            </p>
-
-            <h3 className="text-3xl font-bold text-green-700 mt-2">
-              ₹460
-            </h3>
-
-            <p className="text-xs text-slate-400 mt-1">
-              Prototype estimate
-            </p>
-          </div>
-
+          <StatCard
+            title="Transport Saving"
+            value={`₹${estimatedSaving.toLocaleString()}`}
+            subtitle="Prototype estimate"
+            icon="💰"
+            trend="Estimated"
+            trendType="positive"
+          />
         </div>
 
-        {/* Map + route */}
+        {/* Map + Route */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
           {/* Map */}
-          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden">
-
+          <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-5 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900">
                 Optimized Delivery Map 📍
@@ -174,19 +116,20 @@ export default function Logistics() {
               </p>
             </div>
 
-            {/* Map-style visual */}
+            {/* Prototype Map */}
             <div className="relative h-[430px] bg-slate-100 overflow-hidden">
-
               {/* Roads */}
               <div className="absolute left-[12%] top-[48%] w-[78%] h-3 bg-white rotate-[-10deg] shadow-sm" />
+
               <div className="absolute left-[40%] top-[8%] w-3 h-[80%] bg-white rotate-[18deg] shadow-sm" />
+
               <div className="absolute left-[18%] top-[25%] w-[60%] h-3 bg-white rotate-[35deg] shadow-sm" />
 
-              {/* Route line */}
+              {/* Route */}
               <div className="absolute left-[17%] top-[55%] w-[67%] h-2 bg-green-600 rotate-[-12deg] rounded-full" />
 
               {/* Start */}
-              <div className="absolute left-[12%] top-[57%] text-center">
+              <div className="absolute left-[10%] top-[57%] text-center">
                 <div className="w-12 h-12 bg-green-700 text-white rounded-full flex items-center justify-center text-xl shadow-lg">
                   🚜
                 </div>
@@ -196,42 +139,51 @@ export default function Logistics() {
                 </p>
               </div>
 
-              {/* Stop 1 */}
-              <div className="absolute left-[43%] top-[40%] text-center">
-                <div className="w-11 h-11 bg-white border-4 border-green-600 text-green-700 rounded-full flex items-center justify-center font-bold shadow-lg">
-                  1
-                </div>
+              {/* Stops */}
+              {stops.slice(1).map((stop, index) => {
+                const positions = [
+                  {
+                    left: "43%",
+                    top: "40%",
+                    label: "Sector 62",
+                  },
+                  {
+                    left: "63%",
+                    top: "27%",
+                    label: "Sector 18",
+                  },
+                  {
+                    left: "81%",
+                    top: "18%",
+                    label: "Delhi NCR",
+                  },
+                ];
 
-                <p className="text-xs font-bold text-slate-700 mt-2">
-                  Sector 62
-                </p>
-              </div>
+                const position =
+                  positions[index] || positions[positions.length - 1];
 
-              {/* Stop 2 */}
-              <div className="absolute left-[63%] top-[27%] text-center">
-                <div className="w-11 h-11 bg-white border-4 border-green-600 text-green-700 rounded-full flex items-center justify-center font-bold shadow-lg">
-                  2
-                </div>
+                return (
+                  <div
+                    key={stop.number}
+                    className="absolute text-center"
+                    style={{
+                      left: position.left,
+                      top: position.top,
+                    }}
+                  >
+                    <div className="w-11 h-11 bg-white border-4 border-green-600 text-green-700 rounded-full flex items-center justify-center font-bold shadow-lg">
+                      {stop.number - 1}
+                    </div>
 
-                <p className="text-xs font-bold text-slate-700 mt-2">
-                  Sector 18
-                </p>
-              </div>
+                    <p className="text-xs font-bold text-slate-700 mt-2">
+                      {position.label}
+                    </p>
+                  </div>
+                );
+              })}
 
-              {/* Stop 3 */}
-              <div className="absolute left-[81%] top-[18%] text-center">
-                <div className="w-11 h-11 bg-white border-4 border-green-600 text-green-700 rounded-full flex items-center justify-center font-bold shadow-lg">
-                  3
-                </div>
-
-                <p className="text-xs font-bold text-slate-700 mt-2">
-                  Delhi NCR
-                </p>
-              </div>
-
-              {/* Map label */}
+              {/* Route Status */}
               <div className="absolute bottom-5 left-5 bg-white rounded-xl px-4 py-3 shadow-md">
-
                 <p className="text-xs font-semibold text-slate-500">
                   ROUTE STATUS
                 </p>
@@ -239,16 +191,19 @@ export default function Logistics() {
                 <p className="text-sm font-bold text-green-700 mt-1">
                   ✓ Optimized
                 </p>
-
               </div>
 
+              {/* Prototype Map Badge */}
+              <div className="absolute top-5 right-5 bg-white/95 rounded-xl px-3 py-2 shadow-sm">
+                <p className="text-[11px] font-semibold text-slate-500">
+                  PROTOTYPE MAP
+                </p>
+              </div>
             </div>
-
           </div>
 
-          {/* Route stops */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6">
-
+          {/* Route Stops */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900">
               Route Stops
             </h3>
@@ -258,22 +213,19 @@ export default function Logistics() {
             </p>
 
             <div className="mt-6">
-
               {stops.map((stop, index) => (
-
                 <div
                   key={stop.number}
                   className="relative flex gap-4 pb-7 last:pb-0"
                 >
-
-                  {/* Vertical line */}
+                  {/* Vertical Line */}
                   {index !== stops.length - 1 && (
                     <div className="absolute left-5 top-10 w-0.5 h-full bg-green-100" />
                   )}
 
                   {/* Number */}
                   <div
-                    className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
+                    className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                       stop.type === "Pickup"
                         ? "bg-green-700 text-white"
                         : "bg-green-50 text-green-700"
@@ -282,8 +234,7 @@ export default function Logistics() {
                     {stop.number}
                   </div>
 
-                  <div className="flex-1">
-
+                  <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-900">
                       {stop.name}
                     </p>
@@ -292,8 +243,7 @@ export default function Logistics() {
                       📍 {stop.location}
                     </p>
 
-                    <div className="flex gap-2 mt-2">
-
+                    <div className="flex flex-wrap gap-2 mt-2">
                       <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-md">
                         {stop.type}
                       </span>
@@ -301,71 +251,77 @@ export default function Logistics() {
                       <span className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded-md">
                         {stop.quantity}
                       </span>
-
                     </div>
-
                   </div>
-
                 </div>
-
               ))}
-
             </div>
-
           </div>
-
         </div>
 
-        {/* Vehicle + logistics summary */}
+        {/* Vehicle + Delivery Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-
           {/* Vehicle */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6">
-
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900">
               Assigned Vehicle 🚚
             </h3>
 
             <div className="flex items-center gap-4 mt-5">
-
               <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center text-3xl">
                 🚛
               </div>
 
               <div>
                 <p className="font-bold text-slate-900">
-                  Vehicle UP-14-AB-4582
+                  Vehicle {vehicle.number}
                 </p>
 
                 <p className="text-sm text-slate-500">
-                  Capacity: 1,000 kg
+                  Capacity: {vehicle.capacity.toLocaleString()} kg
                 </p>
 
                 <p className="text-sm text-green-700 font-semibold mt-1">
-                  Load: 500 kg • 50% utilized
+                  Load: {vehicle.load.toLocaleString()} kg •{" "}
+                  {vehicle.utilization}% utilized
                 </p>
               </div>
-
             </div>
 
+            {/* Utilization Bar */}
+            <div className="mt-5">
+              <div className="flex justify-between text-xs text-slate-500 mb-2">
+                <span>Vehicle Utilization</span>
+                <span className="font-semibold">
+                  {vehicle.utilization}%
+                </span>
+              </div>
+
+              <div className="w-full h-2.5 bg-slate-100 rounded-full">
+                <div
+                  className="h-2.5 bg-green-600 rounded-full"
+                  style={{
+                    width: `${vehicle.utilization}%`,
+                  }}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Delivery */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6">
-
+          {/* Delivery Summary */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900">
               Delivery Summary
             </h3>
 
             <div className="grid grid-cols-2 gap-4 mt-5">
-
               <div className="bg-slate-50 rounded-xl p-4">
                 <p className="text-xs text-slate-400">
                   Total Produce
                 </p>
 
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  500 kg
+                  {totalProduce} kg
                 </p>
               </div>
 
@@ -375,7 +331,7 @@ export default function Logistics() {
                 </p>
 
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  3
+                  {deliveryStops}
                 </p>
               </div>
 
@@ -385,7 +341,7 @@ export default function Logistics() {
                 </p>
 
                 <p className="text-xl font-bold text-slate-900 mt-1">
-                  2h 15m
+                  {estimatedTime}
                 </p>
               </div>
 
@@ -398,18 +354,17 @@ export default function Logistics() {
                   Ready
                 </p>
               </div>
-
             </div>
-
           </div>
-
         </div>
 
-        {/* Action */}
+        {/* Actions */}
         <div className="flex flex-col sm:flex-row gap-4 mt-6">
-
           <button
-            onClick={() => alert("Route dispatched successfully!")}
+            type="button"
+            onClick={() =>
+              alert("Route dispatched successfully!")
+            }
             className="flex-1 bg-green-700 text-white py-3.5 rounded-xl font-semibold hover:bg-green-800 transition"
           >
             🚚 Dispatch Route
@@ -421,17 +376,18 @@ export default function Logistics() {
           >
             📦 View Orders
           </Link>
-
         </div>
 
-        {/* Disclaimer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
-          Route distances and savings shown here are prototype estimates.
-          Production deployment will use live map and routing data.
-        </p>
-
+        {/* Prototype Notice */}
+        <div className="mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-xs text-amber-800">
+            <strong>Prototype:</strong> Route distances, delivery
+            sequence and transport savings are demonstration estimates.
+            Production deployment will use live map, order and routing
+            data.
+          </p>
+        </div>
       </main>
-
     </div>
   );
 }
