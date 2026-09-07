@@ -1,46 +1,8 @@
 import { Link } from "react-router-dom";
 
-const orders = [
-  {
-    id: "KD-1001",
-    crop: "Tomato",
-    emoji: "🍅",
-    farmer: "Raj Kumar",
-    location: "Ghaziabad, UP",
-    quantity: 100,
-    price: 30,
-    total: 3000,
-    status: "Confirmed",
-    date: "07 Sep 2026",
-    logistics: "Pickup scheduled",
-  },
-  {
-    id: "KD-1002",
-    crop: "Potato",
-    emoji: "🥔",
-    farmer: "Suresh Kumar",
-    location: "Meerut, UP",
-    quantity: 200,
-    price: 24,
-    total: 4800,
-    status: "In Transit",
-    date: "06 Sep 2026",
-    logistics: "Vehicle assigned",
-  },
-  {
-    id: "KD-1003",
-    crop: "Onion",
-    emoji: "🧅",
-    farmer: "Amit Singh",
-    location: "Bulandshahr, UP",
-    quantity: 150,
-    price: 28,
-    total: 4200,
-    status: "Delivered",
-    date: "04 Sep 2026",
-    logistics: "Delivered successfully",
-  },
-];
+import Navbar from "../components/Navbar";
+import StatCard from "../components/StatCard";
+import { orders } from "../data/mockData";
 
 const statusStyle = {
   Confirmed: "bg-green-50 text-green-700",
@@ -61,36 +23,17 @@ export default function Orders() {
     (order) => order.status === "In Transit"
   ).length;
 
+  const delivered = orders.filter(
+    (order) => order.status === "Delivered"
+  ).length;
+
   return (
     <div className="min-h-screen bg-slate-50">
-
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-
-          <div>
-            <h1 className="text-2xl font-bold text-green-800">
-              KisanDirect AI
-            </h1>
-
-            <p className="text-sm text-slate-500">
-              Order Management
-            </p>
-          </div>
-
-          <Link
-            to="/farmer"
-            className="text-sm font-semibold text-green-700 hover:underline"
-          >
-            ← Dashboard
-          </Link>
-
-        </div>
-      </header>
+      {/* Navbar */}
+      <Navbar />
 
       {/* Main */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
-
+      <main className="page-container py-8">
         {/* Heading */}
         <div className="mb-7">
           <p className="text-sm font-semibold text-green-700">
@@ -107,55 +50,69 @@ export default function Orders() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-7">
+          <StatCard
+            title="Total Orders"
+            value={totalOrders}
+            subtitle="All orders"
+            icon="📦"
+          />
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Total Orders
-            </p>
+          <StatCard
+            title="Total Order Value"
+            value={`₹${totalValue.toLocaleString()}`}
+            subtitle="Combined order value"
+            icon="💰"
+          />
 
-            <h3 className="text-3xl font-bold text-slate-900 mt-2">
-              {totalOrders}
-            </h3>
-          </div>
+          <StatCard
+            title="In Transit"
+            value={inTransit}
+            subtitle="Currently moving"
+            icon="🚚"
+            trend={inTransit > 0 ? "Active" : "None"}
+            trendType={inTransit > 0 ? "positive" : "neutral"}
+          />
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Total Order Value
-            </p>
-
-            <h3 className="text-3xl font-bold text-green-700 mt-2">
-              ₹{totalValue.toLocaleString()}
-            </h3>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-2xl p-5">
-            <p className="text-sm text-slate-500">
-              Orders In Transit
-            </p>
-
-            <h3 className="text-3xl font-bold text-blue-700 mt-2">
-              {inTransit}
-            </h3>
-          </div>
-
+          <StatCard
+            title="Delivered"
+            value={delivered}
+            subtitle="Successfully delivered"
+            icon="✅"
+            trend="Completed"
+            trendType="positive"
+          />
         </div>
 
-        {/* Order list */}
+        {/* Order List */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900">
+              Order History
+            </h3>
+
+            <p className="text-sm text-slate-500 mt-1">
+              Your recent marketplace activity
+            </p>
+          </div>
+
+          <Link
+            to="/marketplace"
+            className="hidden sm:inline-flex bg-green-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold hover:bg-green-800 transition"
+          >
+            🛒 Marketplace
+          </Link>
+        </div>
+
         <div className="space-y-5">
-
           {orders.map((order) => (
-
             <div
               key={order.id}
-              className="bg-white border border-slate-200 rounded-2xl p-6"
+              className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition"
             >
-
               {/* Top */}
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
                 <div className="flex items-center gap-4">
-
                   <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center text-3xl">
                     {order.emoji}
                   </div>
@@ -169,11 +126,9 @@ export default function Orders() {
                       Order #{order.id}
                     </p>
                   </div>
-
                 </div>
 
                 <div className="flex items-center gap-3">
-
                   <span
                     className={`text-xs font-bold px-3 py-2 rounded-full ${
                       statusStyle[order.status] ||
@@ -186,14 +141,11 @@ export default function Orders() {
                   <span className="text-sm text-slate-400">
                     {order.date}
                   </span>
-
                 </div>
-
               </div>
 
               {/* Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6 pt-6 border-t border-slate-100">
-
                 <div>
                   <p className="text-xs text-slate-400">
                     Farmer
@@ -222,6 +174,10 @@ export default function Orders() {
                   <p className="font-semibold text-slate-800 mt-1">
                     {order.quantity} kg
                   </p>
+
+                  <p className="text-xs text-slate-400 mt-1">
+                    ₹{order.price}/kg
+                  </p>
                 </div>
 
                 <div>
@@ -233,12 +189,10 @@ export default function Orders() {
                     ₹{order.total.toLocaleString()}
                   </p>
                 </div>
-
               </div>
 
               {/* Logistics */}
               <div className="mt-5 bg-slate-50 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-
                 <div>
                   <p className="text-xs text-slate-400">
                     Logistics
@@ -255,29 +209,52 @@ export default function Orders() {
                 >
                   View Logistics →
                 </Link>
-
               </div>
-
             </div>
-
           ))}
-
         </div>
 
-        {/* Marketplace button */}
-        <div className="mt-7">
+        {/* Empty state */}
+        {orders.length === 0 && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center">
+            <div className="text-5xl mb-4">📦</div>
 
+            <h3 className="text-xl font-bold text-slate-900">
+              No orders yet
+            </h3>
+
+            <p className="text-slate-500 mt-2">
+              Your marketplace orders will appear here.
+            </p>
+
+            <Link
+              to="/marketplace"
+              className="inline-block mt-5 bg-green-700 text-white px-5 py-3 rounded-xl font-semibold hover:bg-green-800"
+            >
+              Browse Marketplace
+            </Link>
+          </div>
+        )}
+
+        {/* Bottom Action */}
+        <div className="mt-7">
           <Link
             to="/marketplace"
-            className="inline-block bg-green-700 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-800 transition"
+            className="inline-flex items-center bg-green-700 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-800 transition"
           >
             🛒 Continue Shopping
           </Link>
-
         </div>
 
+        {/* Prototype Notice */}
+        <div className="mt-7 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-xs text-amber-800">
+            <strong>Prototype:</strong> Order records shown here are
+            demo data. Real-time order creation, status updates and
+            logistics tracking will be connected through the backend.
+          </p>
+        </div>
       </main>
-
     </div>
   );
-                    }
+}
