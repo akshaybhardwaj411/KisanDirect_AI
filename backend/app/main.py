@@ -9,6 +9,7 @@ from app.models.order import Order
 
 from app.routes.farmers import router as farmer_router
 from app.routes.produce import router as produce_router
+from app.routes.orders import router as order_router
 
 
 # Create database tables
@@ -17,7 +18,10 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="KisanDirect AI API",
-    description="Backend API for direct farmer-to-buyer marketplace, AI insights and logistics.",
+    description=(
+        "Backend API for direct farmer-to-buyer marketplace, "
+        "AI insights and logistics."
+    ),
     version="1.0.0",
 )
 
@@ -35,6 +39,7 @@ app.add_middleware(
 # Register API routes
 app.include_router(farmer_router)
 app.include_router(produce_router)
+app.include_router(order_router)
 
 
 @app.get("/")
