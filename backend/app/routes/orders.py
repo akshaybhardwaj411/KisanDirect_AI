@@ -13,11 +13,9 @@ router = APIRouter(
 
 @router.get("/")
 def get_orders(db: Session = Depends(get_db)):
-    orders = db.query(Order).order_by(
+    return db.query(Order).order_by(
         Order.created_at.desc()
     ).all()
-
-    return orders
 
 
 @router.get("/{order_id}")
@@ -135,7 +133,7 @@ def update_order_status(
     if status not in allowed_statuses:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid status. Allowed values: {', '.join(sorted(allowed_statuses))}",
+            detail="Invalid order status",
         )
 
     order.status = status
