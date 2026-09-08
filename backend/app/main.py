@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 
-# Import models so SQLAlchemy knows about all tables
 from app.models.farmer import Farmer
 from app.models.produce import Produce
 from app.models.order import Order
+
+from app.routes.produce import router as produce_router
 
 
 # Create database tables
@@ -28,6 +29,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Register API routes
+app.include_router(produce_router)
 
 
 @app.get("/")
