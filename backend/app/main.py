@@ -1,13 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.database import Base, engine
+
+# Import models so SQLAlchemy knows about all tables
+from app.models.farmer import Farmer
+from app.models.produce import Produce
+from app.models.order import Order
+
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+
 app = FastAPI(
     title="KisanDirect AI API",
     description="Backend API for direct farmer-to-buyer marketplace, AI insights and logistics.",
     version="1.0.0",
 )
 
-# Allow requests from the deployed React frontend
+
+# Frontend access
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
