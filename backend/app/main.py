@@ -7,6 +7,7 @@ from app.models.farmer import Farmer
 from app.models.produce import Produce
 from app.models.order import Order
 
+from app.routes.farmers import router as farmer_router
 from app.routes.produce import router as produce_router
 
 
@@ -32,6 +33,7 @@ app.add_middleware(
 
 
 # Register API routes
+app.include_router(farmer_router)
 app.include_router(produce_router)
 
 
