@@ -4,7 +4,7 @@ import axios from "axios";
 // Development mein FastAPI usually localhost:8000 par chalega.
 // Deployment ke time isse Render backend URL se replace karenge.
 const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE_URL || "https://kisandirect-ai.onrender.com/";
 
 const api = axios.create({
   baseURL: BASE_URL,
