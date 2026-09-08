@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
-import { createProduct } from "../services/api";
+import {
+  getFarmers,
+  createFarmer,
+  createProduct,
+} from "../services/api";
 
 export default function AddProduce() {
   const navigate = useNavigate();
@@ -28,13 +32,63 @@ export default function AddProduce() {
     });
   };
 
+  // Get existing farmer or create demo farmer
+  const getCurrentFarmerId = async () => {
+    const savedId = localStorage.getItem("kisandirect_farmer_id");
+
+    if (savedId) {
+      return Number(savedId);
+    }
+
+    const farmersResponse = await getFarmers();
+    const farmers = farmersResponse.data || [];
+
+    // If farmer already exists
+    if (farmers.length > 0) {
+      const farmerId = farmers[0].id;
+
+      localStorage.setItem(
+        "kisandirect_farmer_id",
+        farmerId
+      );
+
+      return farmerId;
+    }
+
+    // Create demo farmer if database is empty
+    const newFarmerResponse = await createFarmer({
+      name: "Raj Kumar",
+      phone: "9999999999",
+      location: "Ghaziabad, Uttar Pradesh",
+      farmer_type: "Individual Farmer",
+    });
+
+    const farmerId = newFarmerResponse.data?.farmer?.id;
+
+    if (!farmerId) {
+      throw new Error("Unable to create farmer profile.");
+    }
+
+    localStorage.setItem(
+      "kisandirect_farmer_id",
+      farmerId
+    );
+
+    return farmerId;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     setError("");
     setSuccess("");
 
-    if (!form.crop || !form.quantity || !form.price || !form.harvest_date) {
+    if (
+      !form.crop ||
+      !form.quantity ||
+      !form.price ||
+      !form.harvest_date
+    ) {
       setError("Please fill all required fields.");
       return;
     }
@@ -52,8 +106,12 @@ export default function AddProduce() {
     try {
       setLoading(true);
 
+      // Get real farmer ID from backend
+      const farmerId = await getCurrentFarmerId();
+
+      // Create produce
       const response = await createProduct({
-        farmer_id: 1,
+        farmer_id: farmerId,
         crop: form.crop,
         quantity: Number(form.quantity),
         price: Number(form.price),
@@ -64,16 +122,19 @@ export default function AddProduce() {
 
       console.log("Produce created:", response.data);
 
-      setSuccess("Produce listed successfully! Redirecting...");
+      setSuccess(
+        "Produce listed successfully! Redirecting..."
+      );
 
       setTimeout(() => {
         navigate("/marketplace");
       }, 1200);
     } catch (err) {
-      console.error(err);
+      console.error("Add produce error:", err);
 
       const message =
         err?.response?.data?.detail ||
+        err?.message ||
         "Unable to list produce. Please try again.";
 
       setError(message);
@@ -88,6 +149,8 @@ export default function AddProduce() {
 
       <main className="page-container py-10">
         <div className="max-w-3xl mx-auto">
+
+          {/* Header */}
           <div className="mb-8">
             <p className="text-sm font-semibold text-green-700">
               FARMER MARKETPLACE
@@ -98,25 +161,32 @@ export default function AddProduce() {
             </h1>
 
             <p className="text-slate-500 mt-2">
-              List your crops directly for buyers without unnecessary
-              intermediaries.
+              List your crops directly for buyers without
+              unnecessary intermediaries.
             </p>
           </div>
 
           <div className="card p-6 sm:p-8">
+
+            {/* Error */}
             {error && (
               <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 ❌ {error}
               </div>
             )}
 
+            {/* Success */}
             {success && (
               <div className="mb-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                 ✅ {success}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+
               {/* Crop */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -136,15 +206,20 @@ export default function AddProduce() {
                   <option value="Onion">Onion</option>
                   <option value="Wheat">Wheat</option>
                   <option value="Carrot">Carrot</option>
-                  <option value="Cauliflower">Cauliflower</option>
+                  <option value="Cauliflower">
+                    Cauliflower
+                  </option>
                   <option value="Rice">Rice</option>
-                  <option value="Sugarcane">Sugarcane</option>
+                  <option value="Sugarcane">
+                    Sugarcane
+                  </option>
                   <option value="Other">Other</option>
                 </select>
               </div>
 
               {/* Quantity + Price */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
                     Quantity (kg) *
@@ -179,6 +254,7 @@ export default function AddProduce() {
                     required
                   />
                 </div>
+
               </div>
 
               {/* Location */}
@@ -232,26 +308,29 @@ export default function AddProduce() {
                 </select>
               </div>
 
-              {/* Info */}
+              {/* Backend info */}
               <div className="rounded-xl bg-green-50 border border-green-100 p-4">
                 <p className="text-sm font-semibold text-green-800">
-                  🌱 Direct Farmer Listing
+                  🌱 Live Farmer Listing
                 </p>
 
                 <p className="text-sm text-green-700 mt-1">
-                  Your produce will be stored in the KisanDirect database and
-                  become visible in the live marketplace.
+                  Your produce will be saved in the KisanDirect
+                  database and displayed in the live marketplace.
                 </p>
               </div>
 
               {/* Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
+
                 <Button
                   type="submit"
                   disabled={loading}
                   className="flex-1"
                 >
-                  {loading ? "Listing Produce..." : "List Produce →"}
+                  {loading
+                    ? "Listing Produce..."
+                    : "List Produce →"}
                 </Button>
 
                 <Button
@@ -263,14 +342,17 @@ export default function AddProduce() {
                 >
                   Cancel
                 </Button>
+
               </div>
+
             </form>
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-5">
-            KisanDirect AI • Direct Markets • Smarter Decisions • Stronger
-            Farmers
+            KisanDirect AI • Direct Markets • Smarter Decisions •
+            Stronger Farmers
           </p>
+
         </div>
       </main>
     </div>
