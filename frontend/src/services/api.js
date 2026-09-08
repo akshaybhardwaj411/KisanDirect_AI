@@ -1,20 +1,16 @@
 import axios from "axios";
 
-// Backend URL
-// Development mein FastAPI usually localhost:8000 par chalega.
-// Deployment ke time isse Render backend URL se replace karenge.
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://kisandirect-ai.onrender.com/";
+// Live FastAPI backend
+const BASE_URL = "https://kisandirect-ai.onrender.com";
 
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 15000,
 });
 
-// Automatically attach JWT token when available
+// Add token automatically if authentication is added later
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("kisandirect_token");
@@ -28,176 +24,101 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Handle common API errors
-api.interceptors.response.use(
-  (response) => response,
 
-  (error) => {
-    if (error.response) {
-      console.error(
-        "API Error:",
-        error.response.status,
-        error.response.data
-      );
-    } else if (error.request) {
-      console.error("Server not reachable.");
-    } else {
-      console.error("Request Error:", error.message);
-    }
+// ==============================
+// HEALTH / SYSTEM
+// ==============================
 
-    return Promise.reject(error);
-  }
-);
+export const checkHealth = () =>
+  api.get("/health");
 
-// -----------------------------
-// Authentication
-// -----------------------------
 
-export const loginUser = async (credentials) => {
-  const response = await api.post("/api/auth/login", credentials);
+// ==============================
+// FARMERS
+// ==============================
 
-  if (response.data?.access_token) {
-    localStorage.setItem(
-      "kisandirect_token",
-      response.data.access_token
-    );
-  }
+export const getFarmers = () =>
+  api.get("/api/farmers/");
 
-  return response.data;
-};
+export const getFarmer = (farmerId) =>
+  api.get(`/api/farmers/${farmerId}`);
 
-export const logoutUser = () => {
-  localStorage.removeItem("kisandirect_token");
-  localStorage.removeItem("kisandirect_user");
-};
-
-export const getCurrentUser = async () => {
-  const response = await api.get("/api/auth/me");
-  return response.data;
-};
-
-// -----------------------------
-// Farmer / Produce
-// -----------------------------
-
-export const getFarmerProfile = async () => {
-  const response = await api.get("/api/farmers/me");
-  return response.data;
-};
-
-export const addProduce = async (produceData) => {
-  const response = await api.post(
-    "/api/products",
-    produceData
-  );
-
-  return response.data;
-};
-
-export const getProducts = async (params = {}) => {
-  const response = await api.get("/api/products", {
-    params,
+export const createFarmer = (farmerData) =>
+  api.post("/api/farmers/", null, {
+    params: farmerData,
   });
 
-  return response.data;
-};
 
-export const getProduct = async (productId) => {
-  const response = await api.get(
-    `/api/products/${productId}`
-  );
+// ==============================
+// PRODUCTS / PRODUCE
+// ==============================
 
-  return response.data;
-};
+export const getProducts = () =>
+  api.get("/api/products/");
 
-// -----------------------------
-// Orders
-// -----------------------------
+export const getProduct = (productId) =>
+  api.get(`/api/products/${productId}`);
 
-export const createOrder = async (orderData) => {
-  const response = await api.post(
-    "/api/orders",
-    orderData
-  );
+export const createProduct = (productData) =>
+  api.post("/api/products/", null, {
+    params: productData,
+  });
 
-  return response.data;
-};
 
-export const getOrders = async () => {
-  const response = await api.get("/api/orders");
-  return response.data;
-};
+// ==============================
+// ORDERS
+// ==============================
 
-export const getOrder = async (orderId) => {
-  const response = await api.get(
-    `/api/orders/${orderId}`
-  );
+export const getOrders = () =>
+  api.get("/api/orders/");
 
-  return response.data;
-};
+export const getOrder = (orderId) =>
+  api.get(`/api/orders/${orderId}`);
 
-// -----------------------------
-// AI Insights
-// -----------------------------
+export const createOrder = (orderData) =>
+  api.post("/api/orders/", null, {
+    params: orderData,
+  });
 
-export const getDemandPrediction = async (data) => {
-  const response = await api.post(
-    "/api/predictions/demand",
-    data
-  );
+export const updateOrderStatus = (orderId, status) =>
+  api.patch(`/api/orders/${orderId}/status`, null, {
+    params: {
+      status,
+    },
+  });
 
-  return response.data;
-};
 
-export const getPriceRecommendation = async (data) => {
-  const response = await api.post(
-    "/api/predictions/price",
-    data
-  );
+// ==============================
+// AI — READY FOR ML MODEL
+// ==============================
 
-  return response.data;
-};
+export const predictDemand = (data) =>
+  api.post("/api/predictions/demand", data);
 
-export const getAIInsights = async (data) => {
-  const response = await api.post(
-    "/api/predictions/insights",
-    data
-  );
+export const predictPrice = (data) =>
+  api.post("/api/predictions/price", data);
 
-  return response.data;
-};
+export const getAIInsights = (data) =>
+  api.post("/api/predictions/insights", data);
 
-// -----------------------------
-// Logistics
-// -----------------------------
 
-export const optimizeRoute = async (data) => {
-  const response = await api.post(
-    "/api/logistics/optimize",
-    data
-  );
+// ==============================
+// LOGISTICS — READY FOR ROUTING
+// ==============================
 
-  return response.data;
-};
+export const optimizeRoute = (data) =>
+  api.post("/api/logistics/optimize", data);
 
-export const getLogisticsStatus = async (orderId) => {
-  const response = await api.get(
-    `/api/logistics/${orderId}`
-  );
+export const getLogistics = (orderId) =>
+  api.get(`/api/logistics/${orderId}`);
 
-  return response.data;
-};
 
-// -----------------------------
-// Admin
-// -----------------------------
+// ==============================
+// ADMIN
+// ==============================
 
-export const getAdminDashboard = async () => {
-  const response = await api.get(
-    "/api/admin/dashboard"
-  );
+export const getAdminDashboard = () =>
+  api.get("/api/admin/dashboard");
 
-  return response.data;
-};
 
 export default api;
