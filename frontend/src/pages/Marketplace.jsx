@@ -1,435 +1,549 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 import ProductCard from "../components/ProductCard";
 import Button from "../components/Button";
-import { products } from "../data/mockData";
+import { products as mockProducts } from "../data/mockData";
+import { getProducts, createOrder } from "../services/api";
 
 export default function Marketplace() {
+  const [products, setProducts] = useState(mockProducts);
+  const [loading, setLoading] = useState(true);
+  const [apiConnected, setApiConnected] = useState(false);
+  const [error, setError] = useState("");
+
   const [search, setSearch] = useState("");
-  const [location, setLocation] = useState("All Locations");
+  const [location, setLocation] = useState("All");
+
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [orderQuantity, setOrderQuantity] = useState("");
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [quantity, setQuantity] = useState("");
+  const [buyerName, setBuyerName] = useState("");
+  const [buyerPhone, setBuyerPhone] = useState("");
+  const [buyerLocation, setBuyerLocation] = useState("");
 
-  const filteredProducts = products.filter((product) => {
-    const searchText = search.toLowerCase().trim();
+  const [ordering, setOrdering] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(null);
 
-    const matchesSearch =
-      product.crop.toLowerCase().includes(searchText) ||
-      product.farmer.toLowerCase().includes(searchText);
+  // Load products from live backend
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-    const matchesLocation =
-      location === "All Locations" ||
-      product.location.includes(location);
+        const response = await getProducts();
 
-    return matchesSearch && matchesLocation;
-  });
+        const backendProducts = response.data || [];
 
-  const openOrder = (product) => {
+        if (backendProducts.length > 0) {
+          const formattedProducts = backendProducts.map((product) => ({
+            id: String(product.id),
+            crop: product.crop,
+            emoji: getCropEmoji(product.crop),
+            farmer: `Farmer #${product.farmer_id}`,
+            location: product.location,
+            quantity: product.quantity,
+            price: product.price,
+            quality: product.quality,
+            demand: "MEDIUM",
+            harvestDate: product.harvest_date,
+          }));
+
+          setProducts(formattedProducts);
+        } else {
+          setProducts([]);
+        }
+
+        setApiConnected(true);
+      } catch (err) {
+        console.error("Failed to load products:", err);
+
+        setApiConnected(false);
+        setError(
+          "Live marketplace unavailable. Showing demo marketplace data."
+        );
+
+        setProducts(mockProducts);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  const locations = useMemo(() => {
+    const uniqueLocations = [
+      ...new Set(products.map((product) => product.location)),
+    ];
+
+    return ["All", ...uniqueLocations];
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.crop
+        .toLowerCase()
+        .includes(search.toLowerCase());
+
+      const matchesLocation =
+        location === "All" || product.location === location;
+
+      return matchesSearch && matchesLocation;
+    });
+  }, [products, search, location]);
+
+  const openOrderModal = (product) => {
     setSelectedProduct(product);
-    setOrderQuantity("");
-    setOrderPlaced(false);
+    setQuantity("");
+    setBuyerName("");
+    setBuyerPhone("");
+    setBuyerLocation("");
+    setOrderSuccess(null);
   };
 
-  const closeOrder = () => {
-    setSelectedProduct(null);
-    setOrderQuantity("");
-    setOrderPlaced(false);
+  const closeOrderModal = () => {
+    if (!ordering) {
+      setSelectedProduct(null);
+      setOrderSuccess(null);
+    }
   };
 
-  const placeOrder = (e) => {
+  const handleOrder = async (e) => {
     e.preventDefault();
 
     if (!selectedProduct) return;
 
-    const quantity = Number(orderQuantity);
+    const requestedQuantity = Number(quantity);
 
-    if (
-      !quantity ||
-      quantity <= 0 ||
-      quantity > selectedProduct.quantity
-    ) {
+    if (!buyerName.trim()) {
+      alert("Please enter buyer name.");
       return;
     }
 
-    setOrderPlaced(true);
+    if (!buyerPhone.trim()) {
+      alert("Please enter buyer phone.");
+      return;
+    }
+
+    if (!buyerLocation.trim()) {
+      alert("Please enter buyer location.");
+      return;
+    }
+
+    if (!requestedQuantity || requestedQuantity <= 0) {
+      alert("Please enter a valid quantity.");
+      return;
+    }
+
+    if (requestedQuantity > Number(selectedProduct.quantity)) {
+      alert("Requested quantity exceeds available produce.");
+      return;
+    }
+
+    try {
+      setOrdering(true);
+
+      const response = await createOrder({
+        produce_id: Number(selectedProduct.id),
+        buyer_name: buyerName.trim(),
+        buyer_phone: buyerPhone.trim(),
+        buyer_location: buyerLocation.trim(),
+        quantity: requestedQuantity,
+      });
+
+      setOrderSuccess(response.data);
+
+      // Update displayed stock immediately
+      setProducts((previousProducts) =>
+        previousProducts
+          .map((product) => {
+            if (String(product.id) !== String(selectedProduct.id)) {
+              return product;
+            }
+
+            const remainingQuantity =
+              Number(product.quantity) - requestedQuantity;
+
+            return {
+              ...product,
+              quantity: remainingQuantity,
+            };
+          })
+          .filter((product) => Number(product.quantity) > 0)
+      );
+    } catch (err) {
+      console.error("Order failed:", err);
+
+      const message =
+        err?.response?.data?.detail ||
+        "Unable to place order. Please try again.";
+
+      alert(message);
+    } finally {
+      setOrdering(false);
+    }
   };
 
-  const totalAmount =
-    selectedProduct && orderQuantity
-      ? Number(orderQuantity) * selectedProduct.price
-      : 0;
+  const clearFilters = () => {
+    setSearch("");
+    setLocation("All");
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Navbar */}
       <Navbar />
 
-      {/* Main */}
       <main className="page-container py-8">
-        {/* Heading */}
-        <div className="mb-7">
-          <p className="text-sm font-semibold text-green-700">
-            DIRECT MARKETPLACE
-          </p>
-
-          <h2 className="text-3xl font-bold text-slate-900 mt-1">
-            Buy Directly From Farmers 🛒
-          </h2>
-
-          <p className="text-slate-500 mt-2">
-            Discover fresh produce directly from farmers and FPOs.
-          </p>
-        </div>
-
-        {/* AI Banner */}
-        <div className="bg-green-700 text-white rounded-2xl p-5 mb-6 shadow-sm">
-          <div className="flex items-start gap-4">
-            <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center text-xl shrink-0">
-              🤖
-            </div>
-
-            <div>
-              <p className="font-bold">
-                AI Market Intelligence
-              </p>
-
-              <p className="text-sm text-green-100 mt-1">
-                Products marked HIGH demand are currently showing
-                stronger buyer interest in the selected market.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Search & Filters */}
-        <div className="card p-5 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Search Produce
-              </label>
-
-              <div className="relative">
-                <span className="absolute left-4 top-3.5">
-                  🔍
-                </span>
-
-                <input
-                  type="text"
-                  placeholder="Search tomato, potato, farmer..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="input-field pl-11"
-                />
-              </div>
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
-                Location
-              </label>
-
-              <select
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                className="input-field bg-white"
-              >
-                <option>All Locations</option>
-                <option>Ghaziabad</option>
-                <option>Meerut</option>
-                <option>Bulandshahr</option>
-                <option>Muzaffarnagar</option>
-                <option>Noida</option>
-                <option>Hapur</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Results Header */}
-        <div className="flex items-center justify-between mb-4">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
           <div>
-            <h3 className="text-lg font-bold text-slate-900">
-              Available Produce
-            </h3>
+            <p className="text-sm font-semibold text-green-700">
+              DIRECT FARMER MARKET
+            </p>
 
-            <p className="text-sm text-slate-500">
-              {filteredProducts.length} listings found
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mt-1">
+              Fresh Produce Marketplace 🛒
+            </h2>
+
+            <p className="text-slate-500 mt-2 max-w-2xl">
+              Discover produce directly from farmers and place orders without
+              unnecessary intermediaries.
             </p>
           </div>
 
           <Link
-            to="/farmer"
-            className="hidden sm:inline-flex text-sm font-semibold text-green-700 hover:underline"
+            to="/farmer/add-produce"
+            className="inline-flex items-center justify-center bg-green-700 text-white px-5 py-3 rounded-xl font-semibold hover:bg-green-800 transition"
           >
-            ← Dashboard
+            + List Your Produce
           </Link>
         </div>
 
-        {/* Product Cards */}
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onOrder={openOrder}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="card p-12 text-center">
-            <div className="text-5xl mb-4">
-              🌾
+        {/* Connection Status */}
+        <div className="mt-6">
+          {apiConnected ? (
+            <div className="inline-flex items-center gap-2 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="w-2.5 h-2.5 bg-green-500 rounded-full" />
+              Live marketplace connected
             </div>
+          ) : (
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-full text-sm font-semibold">
+              <span className="w-2.5 h-2.5 bg-amber-500 rounded-full" />
+              Demo marketplace mode
+            </div>
+          )}
+        </div>
 
-            <h3 className="text-xl font-bold text-slate-900">
-              No produce found
-            </h3>
-
-            <p className="text-slate-500 mt-2">
-              Try another crop, farmer or location.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSearch("");
-                setLocation("All Locations");
-              }}
-              className="mt-5 text-green-700 font-semibold hover:underline"
-            >
-              Clear Filters
-            </button>
+        {/* Error / Fallback */}
+        {error && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl px-4 py-3 text-sm">
+            {error}
           </div>
         )}
+
+        {/* Filters */}
+        <section className="card mt-7 p-5">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_auto] gap-3">
+            <input
+              type="text"
+              placeholder="Search crop..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input-field"
+            />
+
+            <select
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="input-field bg-white"
+            >
+              {locations.map((item) => (
+                <option key={item} value={item}>
+                  {item === "All" ? "All Locations" : item}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              variant="secondary"
+              onClick={clearFilters}
+              className="md:px-6"
+            >
+              Clear
+            </Button>
+          </div>
+        </section>
+
+        {/* Products */}
+        <section className="mt-7">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">
+                Available Produce
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-1">
+                {filteredProducts.length} listing
+                {filteredProducts.length !== 1 ? "s" : ""} found
+              </p>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="card p-10 text-center">
+              <div className="text-4xl">🌾</div>
+              <p className="font-semibold text-slate-700 mt-4">
+                Loading live marketplace...
+              </p>
+              <p className="text-sm text-slate-400 mt-1">
+                Connecting to KisanDirect AI backend.
+              </p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="card p-10 text-center">
+              <div className="text-4xl">🔍</div>
+              <h3 className="font-bold text-slate-800 mt-4">
+                No produce found
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">
+                Try changing your search or location filter.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onOrder={openOrderModal}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Prototype Notice */}
+        <div className="mt-8 bg-green-50 border border-green-200 rounded-xl p-4">
+          <p className="text-xs text-green-800">
+            <strong>Live Backend:</strong> Marketplace listings and orders are
+            now connected to the FastAPI backend. AI demand and price
+            intelligence will be connected after the ML models are trained.
+          </p>
+        </div>
       </main>
 
       {/* Order Modal */}
       {selectedProduct && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 sm:p-5 z-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              closeOrder();
-            }
-          }}
+          className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4"
+          onClick={closeOrderModal}
         >
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6 max-h-[90vh] overflow-y-auto">
-            {!orderPlaced ? (
-              <>
-                {/* Modal Header */}
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm text-slate-500">
-                      Place Order
-                    </p>
+          <div
+            className="bg-white w-full max-w-lg rounded-2xl shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm text-slate-500">
+                    Place Direct Order
+                  </p>
 
-                    <h3 className="text-2xl font-bold text-slate-900 mt-1">
-                      {selectedProduct.emoji}{" "}
-                      {selectedProduct.crop}
-                    </h3>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={closeOrder}
-                    className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700"
-                  >
-                    ✕
-                  </button>
+                  <h3 className="text-2xl font-bold text-slate-900 mt-1">
+                    {selectedProduct.emoji} {selectedProduct.crop}
+                  </h3>
                 </div>
 
-                {/* Product Information */}
-                <div className="bg-slate-50 rounded-xl p-4 mt-5">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sm text-slate-500">
-                      Farmer
-                    </span>
+                <button
+                  type="button"
+                  onClick={closeOrderModal}
+                  disabled={ordering}
+                  className="w-9 h-9 rounded-lg hover:bg-slate-100 text-slate-500"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
 
-                    <span className="text-sm font-semibold text-right">
-                      {selectedProduct.farmer}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Location
-                    </span>
-
-                    <span className="text-sm font-semibold text-right">
-                      {selectedProduct.location}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Quality
-                    </span>
-
-                    <span className="text-sm font-semibold">
-                      {selectedProduct.quality}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Price
-                    </span>
-
-                    <span className="text-sm font-semibold text-green-700">
-                      ₹{selectedProduct.price}/kg
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Available
-                    </span>
-
-                    <span className="text-sm font-semibold">
-                      {selectedProduct.quantity.toLocaleString()} kg
-                    </span>
-                  </div>
-                </div>
-
-                {/* Order Form */}
-                <form onSubmit={placeOrder}>
-                  <label className="block text-sm font-semibold text-slate-700 mt-6 mb-2">
-                    Order Quantity (kg)
-                  </label>
-
-                  <input
-                    type="number"
-                    min="1"
-                    max={selectedProduct.quantity}
-                    value={orderQuantity}
-                    onChange={(e) =>
-                      setOrderQuantity(e.target.value)
-                    }
-                    placeholder={`Maximum ${selectedProduct.quantity} kg`}
-                    required
-                    className="input-field"
-                  />
-
-                  {orderQuantity &&
-                    Number(orderQuantity) >
-                      selectedProduct.quantity && (
-                      <p className="text-sm text-red-600 mt-2">
-                        Quantity cannot exceed available stock.
-                      </p>
-                    )}
-
-                  {orderQuantity &&
-                    Number(orderQuantity) > 0 &&
-                    Number(orderQuantity) <=
-                      selectedProduct.quantity && (
-                      <div className="mt-4 p-4 bg-green-50 rounded-xl">
-                        <div className="flex justify-between">
-                          <span className="text-sm text-green-800">
-                            Estimated Total
-                          </span>
-
-                          <span className="font-bold text-green-800">
-                            ₹{totalAmount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                  <div className="flex gap-3 mt-5">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onClick={closeOrder}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-
-                    <Button
-                      type="submit"
-                      className="flex-1"
-                      disabled={
-                        !orderQuantity ||
-                        Number(orderQuantity) <= 0 ||
-                        Number(orderQuantity) >
-                          selectedProduct.quantity
-                      }
-                    >
-                      Confirm Order
-                    </Button>
-                  </div>
-                </form>
-              </>
-            ) : (
-              /* Success */
-              <div className="text-center py-6">
+            {orderSuccess ? (
+              <div className="p-7">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-3xl mx-auto">
-                  ✓
+                  ✅
                 </div>
 
-                <h3 className="text-2xl font-bold text-slate-900 mt-5">
-                  Order Placed!
+                <h3 className="text-xl font-bold text-slate-900 text-center mt-4">
+                  Order Created Successfully
                 </h3>
 
-                <p className="text-slate-500 mt-2">
-                  Your order for{" "}
-                  <strong>
-                    {orderQuantity} kg of{" "}
-                    {selectedProduct.crop}
-                  </strong>{" "}
-                  has been submitted.
+                <p className="text-center text-slate-500 mt-2">
+                  Your order has been saved to the KisanDirect AI database.
                 </p>
 
-                <div className="bg-slate-50 rounded-xl p-4 mt-5 text-left">
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sm text-slate-500">
-                      Farmer
-                    </span>
-
-                    <span className="text-sm font-semibold">
-                      {selectedProduct.farmer}
-                    </span>
+                <div className="bg-slate-50 rounded-xl p-4 mt-5 text-sm space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Order</span>
+                    <strong>{orderSuccess.order?.order_number}</strong>
                   </div>
 
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Quantity
-                    </span>
-
-                    <span className="text-sm font-semibold">
-                      {orderQuantity} kg
-                    </span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Quantity</span>
+                    <strong>{orderSuccess.order?.quantity} kg</strong>
                   </div>
 
-                  <div className="flex justify-between gap-3 mt-2">
-                    <span className="text-sm text-slate-500">
-                      Total
-                    </span>
-
-                    <span className="text-sm font-bold text-green-700">
-                      ₹{totalAmount.toLocaleString()}
-                    </span>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Total</span>
+                    <strong>
+                      ₹{orderSuccess.order?.total_amount}
+                    </strong>
                   </div>
                 </div>
 
                 <Button
-                  onClick={closeOrder}
                   className="w-full mt-5"
+                  onClick={closeOrderModal}
                 >
-                  Continue Shopping
+                  Done
                 </Button>
               </div>
+            ) : (
+              <form onSubmit={handleOrder} className="p-6">
+                <div className="bg-green-50 rounded-xl p-4 mb-5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-slate-500">Price</span>
+                    <strong className="text-green-700">
+                      ₹{selectedProduct.price}/kg
+                    </strong>
+                  </div>
+
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-slate-500">Available</span>
+                    <strong>
+                      {Number(selectedProduct.quantity).toLocaleString()} kg
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Buyer Name
+                    </label>
+
+                    <input
+                      type="text"
+                      value={buyerName}
+                      onChange={(e) => setBuyerName(e.target.value)}
+                      placeholder="e.g. Delhi Fresh Mart"
+                      required
+                      className="input-field"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Buyer Phone
+                    </label>
+
+                    <input
+                      type="tel"
+                      value={buyerPhone}
+                      onChange={(e) => setBuyerPhone(e.target.value)}
+                      placeholder="e.g. 8888888888"
+                      required
+                      className="input-field"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Buyer Location
+                    </label>
+
+                    <input
+                      type="text"
+                      value={buyerLocation}
+                      onChange={(e) => setBuyerLocation(e.target.value)}
+                      placeholder="e.g. Noida Sector 62"
+                      required
+                      className="input-field"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      Quantity (kg)
+                    </label>
+
+                    <input
+                      type="number"
+                      min="1"
+                      max={selectedProduct.quantity}
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                      placeholder="e.g. 100"
+                      required
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+
+                {quantity && Number(quantity) > 0 && (
+                  <div className="mt-5 border-t border-slate-200 pt-5">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">
+                        Estimated Total
+                      </span>
+
+                      <strong className="text-xl text-green-700">
+                        ₹
+                        {(
+                          Number(quantity) *
+                          Number(selectedProduct.price)
+                        ).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    type="submit"
+                    disabled={ordering}
+                    className="flex-1"
+                  >
+                    {ordering ? "Creating Order..." : "Confirm Order"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={closeOrderModal}
+                    disabled={ordering}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
             )}
           </div>
         </div>
       )}
     </div>
   );
+}
+
+function getCropEmoji(crop) {
+  const emojis = {
+    Tomato: "🍅",
+    Potato: "🥔",
+    Onion: "🧅",
+    Wheat: "🌾",
+    Rice: "🌾",
+    Carrot: "🥕",
+    Cauliflower: "🥦",
+  };
+
+  return emojis[crop] || "🌾";
 }
