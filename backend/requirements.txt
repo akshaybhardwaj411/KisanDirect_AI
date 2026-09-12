@@ -8,3 +8,10 @@ python-multipart
 passlib[bcrypt]
 python-jose[cryptography]
 email-validator
+
+# AI / ML
+joblib
+numpy
+pandas
+scikit-learn
+xgboost
