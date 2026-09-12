@@ -3,32 +3,43 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
 
+# Models
 from app.models.farmer import Farmer
 from app.models.produce import Produce
 from app.models.order import Order
-from app.routes import price
 
+# Routes
 from app.routes.farmers import router as farmer_router
 from app.routes.produce import router as produce_router
 from app.routes.orders import router as order_router
-from app.routes.orders import router as price_router
+from app.routes.price import router as price_router
 
 
+# ==========================================
 # Create database tables
+# ==========================================
+
 Base.metadata.create_all(bind=engine)
 
+
+# ==========================================
+# FastAPI Application
+# ==========================================
 
 app = FastAPI(
     title="KisanDirect AI API",
     description=(
         "Backend API for direct farmer-to-buyer marketplace, "
-        "AI insights and logistics."
+        "AI price prediction, AI insights and smart logistics."
     ),
     version="1.0.0",
 )
 
 
-# Frontend access
+# ==========================================
+# CORS - Frontend Access
+# ==========================================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,12 +49,19 @@ app.add_middleware(
 )
 
 
-# Register API routes
+# ==========================================
+# Register API Routes
+# ==========================================
+
 app.include_router(farmer_router)
 app.include_router(produce_router)
 app.include_router(order_router)
 app.include_router(price_router)
 
+
+# ==========================================
+# Root Endpoint
+# ==========================================
 
 @app.get("/")
 def root():
@@ -53,6 +71,10 @@ def root():
         "version": "1.0.0",
     }
 
+
+# ==========================================
+# Health Check
+# ==========================================
 
 @app.get("/health")
 def health_check():
