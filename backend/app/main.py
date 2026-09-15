@@ -13,7 +13,7 @@ from app.routes.farmers import router as farmer_router
 from app.routes.produce import router as produce_router
 from app.routes.orders import router as order_router
 from app.routes.price import router as price_router
-
+from app.routes.demand import router as demand_router
 
 # ==========================================
 # Create database tables
@@ -57,7 +57,7 @@ app.include_router(farmer_router)
 app.include_router(produce_router)
 app.include_router(order_router)
 app.include_router(price_router)
-
+app.include_router(demand_router)
 
 # ==========================================
 # Root Endpoint
